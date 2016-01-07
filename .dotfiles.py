@@ -13,7 +13,7 @@ CONFIG_FILE = os.path.join(here, '.dotfiles.conf')
 
 def main():
     config = yaml.load(open(CONFIG_FILE, 'r'))
-    if len(sys.argvv) > 1:
+    if len(sys.argv) > 1:
         todo_files = sys.argv[1:]
     else:
         todo_files = config.keys()
