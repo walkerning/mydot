@@ -42,14 +42,16 @@ main() {
 
     env python ${INIT_SCRIPT} || {
         printf "${RED}运行 ${INIT_SCRIPT} 遇到错误${NORMAL}"
-        popd
+        clean
         exit 1
     }
 
     printf "${GREEN}所有配置成功${NORMAL}"
-    popd
-
-    rm -rf ${TMP_DIR}
+    clean
 }
 
+clean() {
+    popd
+    rm -rf ${TMP_DIR}
+}
 main
