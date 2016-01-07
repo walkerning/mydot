@@ -1,0 +1,44 @@
+### ---- OSX ----
+.DS_Store
+
+### ---- Emacs ----
+# backup/cache
+\#*\#
+*~
+.\#*
+
+# sessions
+/.emacs.desktop
+auto-save-list
+
+# flymake-mode
+*_flymake.*
+
+
+### ---- Python ----
+# python bytecodes / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# python virtual env
+venv/
+VENV/
+
+# Python distribution
+#build/
+dist/
+.eggs/
+eggs/
+*.egg-info
+*.egg
+
+### ---- C ----
+# libs
+*.so
+*.a
+
+# object files
+*.o
+
+# tmpfiles
+tmp/

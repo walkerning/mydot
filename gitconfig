@@ -1,0 +1,10 @@
+[push]
+	default = simple
+[user]
+	email = foxdoraame@gmail.com
+	name = walkerning
+[core]
+	excludesfile = ~/.gitignore
+[alias]
+	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+
