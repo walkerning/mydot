@@ -24,12 +24,14 @@ def main():
         try:
             METHODS[config[file_name]](src, dst)
         except Exception as e:
-            print("处理%s时出错: %s" % (file_name, e))
+            print("处理%s时出错, 跳过:\n\t%s: %s" % (file_name, e.__class__.__name__, e))
         else:
             print("成功处理%s" % file_name)
 
 
 def append(src, dst):
+    if not os.path.isfile(dst):
+        raise Exception("In append: 文件 %s 不存在" % dst)
     dst_file = open(dst, 'a')
     dst_file.write('\n' + open(src, 'r').read())
 

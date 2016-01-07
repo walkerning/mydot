@@ -48,6 +48,8 @@ main() {
 
     printf "${GREEN}所有配置成功${NORMAL}"
     popd
+
+    rm -rf ${TMP_DIR}
 }
 
 main
