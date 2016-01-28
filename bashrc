@@ -1,5 +1,4 @@
 # foxfi's env
-export PS1="%{$fg[yellow]%}%n @ %m%{$reset_color%} $PS1"
 export GLOBAL_VENV_DIR="${HOME}/venvs/"
 export EDITOR="emacsclient -c"
 
@@ -7,7 +6,7 @@ export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
 # foxfi's alias
-alias szsh="source ${HOME}/.zshrc"
+alias sbsh="source ${HOME}/.bashrc"
 alias e="emacsclient -c"
 
 # foxfi's functions
