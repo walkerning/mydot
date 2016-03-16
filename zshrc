@@ -39,3 +39,19 @@ function fvenv() {
 
 }
 
+# If not running interactively, return
+[[ $- != *i* ]] && return
+ 
+if [[ -z "$TMUX" ]] ;then
+    ID="`tmux ls | grep -vm1 attached | cut -d: -f1`" # get the id of a deattached session
+    if [[ -z "$ID" ]] ;then # if not available create a new one
+        tmux new-session
+    else
+        read -p "Attach Tmux session (y) or Create a New Tmux Session (n)?" yn
+        case $yn in 
+            [Yy]* ) tmux attach-session -t "$ID";; # if available attach to it
+            [Nn]* ) tmux new-session;;
+            * ) tmux attach-session -t "$ID";;
+        esac
+    fi
+fi
