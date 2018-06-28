@@ -66,7 +66,7 @@ METHODS = {
     'append': append,
     'copy': copy,
     'copytree': copytree,
-    'create_or_append', create_or_append
+    'create_or_append': create_or_append
 }
 
 
