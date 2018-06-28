@@ -51,13 +51,22 @@ def copytree(src, dst, symlinks=False, ignore=None):
         else:
             shutil.copy2(s, d)
 
+def create_or_append(src, dst):
+    if not os.path.isfile(dst):
+        os.makedirs(os.path.dirname(dst))
+        shutil.copy(src, dst)
+    else:
+        with open(dst, 'a') as dst_file:
+            dst_file.write('\n' + open(src, 'r').read())
+
 # 可能.ssh还需要自动chmod一下...以及chattr +i 一下... 所以还需要一个pre或者post的权限设置
 # 或者指定文件权限的...
 
 METHODS = {
     'append': append,
     'copy': copy,
-    'copytree': copytree
+    'copytree': copytree,
+    'create_or_append', create_or_append
 }
 
 
