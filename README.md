@@ -6,3 +6,6 @@ mydot
 ```bash
 wget https://raw.githubusercontent.com/walkerning/mydot/master/install.sh -O install.sh && bash install.sh
 ```
+```bash
+bash -c "$(wget https://raw.githubusercontent.com/walkerning/mydot/master/install.sh -O -)"
+```
