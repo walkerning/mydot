@@ -55,6 +55,9 @@
 (setq column-number-mode t)
 
 ;; ORG mode
+(require 'cl-lib) ;; include common-lisp facilities for `sequence`
+(require 'use-package)
+(use-package org)
 (setq org-todo-keywords
       '((sequence "TODO(t)" "DOING(i)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "|" "DONE(d)" "ABANDONED(a)")))
 
