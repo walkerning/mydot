@@ -1,22 +1,38 @@
 ;;;;; --- Start ---
-;;;; Not a fan of backup files
-(setq make-backup-files nil)
-
-;;;; Permit narrow-to-region
-(put 'narrow-to-region 'disabled nil)
-
-;;;; Setup package.el
+;;;; -- Setup package.el, and bootstrap `use-package' --
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (package-initialize)
-
-;;;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
+(require 'use-package)
+;; Q: should we use always-ensure?
 
-;;;; Configure flymake for Python
+;;;; -- View settings --
+;; Show line number at left side
+(cond ((version<= emacs-version "26.0.0")
+       (global-linum-mode 1))
+      (t (global-display-line-numbers-mode)))
+
+;; Column number mode (show column number at the mode line)
+(setq column-number-mode t)
+
+;; Disable tool bar, scroll bar
+(tool-bar-mode -1)
+(toggle-scroll-bar -1)
+
+
+;;;; -- Misc --
+;; Not a fan of backup files
+(setq make-backup-files nil)
+
+;; Permit narrow-to-region
+(put 'narrow-to-region 'disabled nil)
+
+
+;;;; -- Flymake for Python --
 (when (load "flymake" t)
   (defun flymake-pylint-init ()
     (let* ((temp-file (flymake-init-create-temp-buffer-copy
@@ -43,7 +59,7 @@
 (load "flymake")
 (defun show-fly-err-at-point ()
   "If the cursor is sitting on a flymake error, display the message in the minibuffer"
-  (require 'cl)
+  (use-package cl)
   (interactive)
   (let ((line-no (line-number-at-pos)))
     (dolist (elem flymake-err-info)
@@ -53,24 +69,36 @@
 
 (add-hook 'post-command-hook 'show-fly-err-at-point)
 
-;;;; View settings
-;; Show line number at left side
-(cond ((version<= emacs-version "26.0.0")
-       (global-linum-mode 1))
-      (t (global-display-line-numbers-mode)))
 
-;; Column number mode (show column number at the mode line)
-(setq column-number-mode t)
-
-;; Disable tool bar, scroll bar
-(tool-bar-mode -1)
-(toggle-scroll-bar -1)
-
-;;;; ORG mode
-(require 'cl-lib) ;; include common-lisp facilities for `sequence`
-(require 'use-package)
+;;;; -- ORG mode --
+(use-package cl-lib) ;; include common-lisp facilities for `sequence`
 (use-package org)
 
+;;; key bindings
+(define-key org-mode-map (kbd "M-C") 'org-table-insert-column)
+(define-key org-mode-map (kbd "M-R") 'org-table-insert-row)
+(define-key org-mode-map (kbd "C-M-K") 'org-table-delete-column)
+(define-key org-mode-map (kbd "C-c |") 'org-table-convert-region)
+(define-key org-mode-map (kbd "C-M-n") 'org-table-copy-down)
+
+;;; org mode files
+(setq org-directory (expand-file-name "~/org"))
+(setq org-default-notes-file (concat org-directory "/captured.org"))
+(setq org-agenda-files (quote ("~/org")))
+
+;;; basic settings
+(setq org-startup-indented t) ; Enable `org-indent-mode' by default
+(setq org-cycle-separator-lines 1)
+(add-hook 'org-mode-hook #'visual-line-mode) ; autowarp
+;; make the section marked by ** use foreground red
+(add-to-list 'org-emphasis-alist
+             '("*" (:foreground "red")
+               ))
+
+;;; Export
+(setq org-export-coding-system 'utf-8)
+
+;;; TODO keywords, tags settings
 (setq org-todo-keywords
       '((sequence "IDEA(i)" "TODO(t)" "STARTED(s)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "|" "DONE(d)" "ABANDONED(a)")))
 
@@ -115,19 +143,8 @@
         )
       )
 
-;; some style
-(setq org-cycle-separator-lines 1)
-;; make the section marked by ** use foreground red
-(add-to-list 'org-emphasis-alist
-             '("*" (:foreground "red")
-               ))
-
-;;; org key bindings
-(define-key org-mode-map (kbd "M-C") 'org-table-insert-column)
-(define-key org-mode-map (kbd "M-R") 'org-table-insert-row)
-(define-key org-mode-map (kbd "C-M-K") 'org-table-delete-column)
-(define-key org-mode-map (kbd "C-c |") 'org-table-convert-region)
-(define-key org-mode-map (kbd "C-M-n") 'org-table-copy-down)
+;;; Code blocks
+;; evaluable codes in org-mode
 (org-babel-do-load-languages
  'org-babel-load-languages
  '(
@@ -143,18 +160,9 @@
    (awk . t)
    ))
 
-(setq org-export-coding-system 'utf-8)
-(setq org-src-fontify-natively t)
-(setq org-src-tab-acts-natively t)
+(setq org-src-fontify-natively t) ; fontify code in code blocks
+(setq org-src-tab-acts-natively t) ; tab in a block work as in the language major mode buffer
 
-;;; org mode files
-(setq org-directory (expand-file-name "~/org"))
-(setq org-default-notes-file (concat org-directory "/captured.org"))
-(setq org-agenda-files (quote ("~/org")))
-
-(setq org-startup-indented t) ; Enable `org-indent-mode' by default
-
-(add-hook 'org-mode-hook #'visual-line-mode) ; autowarp
 
 ;;; ORG Capture
 (define-key global-map "\C-cc" 'org-capture)
@@ -194,18 +202,25 @@
 	 (file "~/.emacs.d/org-templates/note.orgcaptmpl")) ;; template in file
 	))
 
-;;;; only on emacs with x support; pdf-tools
-;(use-package pdf-tools
-;  :pin manual ;; manually update
-;  :config
-;  ;; initialise
-;  (pdf-tools-install)
-;  ;; open pdfs scaled to fit page
-;  (setq-default pdf-view-display-size 'fit-page)
-;  ;; automatically annotate highlights
-;  (setq pdf-annot-activate-created-annotations t)
-  ;; use normal isearch
-;  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+
+;;;; -- Configure pdf-tools (only on emacs on display grpahic window system) --
+;; note that pdf-tools choke emacs with (global-linum-mode 1)
+;; so only use it when version > 26.0.0
+;; when `global-display-line-numbers-mode` is available
+(cond ((and (display-graphic-p) (version<= "26.0.0" emacs-version))
+       (use-package pdf-tools
+	 :ensure t ;; auto-download from elpa
+	 :pin manual ;; manually update
+	 :config
+	 ;; initialise
+	 (pdf-tools-install)
+	 ;; open pdfs scaled to fit page
+	 (setq-default pdf-view-display-size 'fit-page)
+	 ;; automatically annotate highlights
+	 (setq pdf-annot-activate-created-annotations t)
+	 use normal isearch
+	 (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+       ))
 
 ;;;;; --- End ---
 
