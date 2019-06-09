@@ -1,21 +1,22 @@
-;; Not a fan of backup files
+;;;;; --- Start ---
+;;;; Not a fan of backup files
 (setq make-backup-files nil)
 
-;; Permit narrow-to-region
+;;;; Permit narrow-to-region
 (put 'narrow-to-region 'disabled nil)
 
-;; Setup package.el
+;;;; Setup package.el
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (package-initialize)
 
-;; Bootstrap `use-package'
+;;;; Bootstrap `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
-;; Configure flymake for Python
+;;;; Configure flymake for Python
 (when (load "flymake" t)
   (defun flymake-pylint-init ()
     (let* ((temp-file (flymake-init-create-temp-buffer-copy
@@ -39,6 +40,7 @@
 
 ;; To avoid having to mouse hover for the error message, these functions make flymake error messages
 ;; appear in the minibuffer
+(load "flymake")
 (defun show-fly-err-at-point ()
   "If the cursor is sitting on a flymake error, display the message in the minibuffer"
   (require 'cl)
@@ -51,28 +53,174 @@
 
 (add-hook 'post-command-hook 'show-fly-err-at-point)
 
-;; Column number mode
+;;;; View settings
+;; Show line number at left side
+(cond ((version<= emacs-version "26.0.0")
+       (global-linum-mode 1))
+      (t (global-display-line-numbers-mode)))
+
+;; Column number mode (show column number at the mode line)
 (setq column-number-mode t)
 
-;; ORG mode
+;; Disable tool bar, scroll bar
+(tool-bar-mode -1)
+(toggle-scroll-bar -1)
+
+;;;; ORG mode
 (require 'cl-lib) ;; include common-lisp facilities for `sequence`
 (require 'use-package)
 (use-package org)
-(setq org-todo-keywords
-      '((sequence "TODO(t)" "DOING(i)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "|" "DONE(d)" "ABANDONED(a)")))
 
-(org-defkey org-mode-map (kbd "M-C") 'org-table-insert-column)
-(org-defkey org-mode-map (kbd "M-R") 'org-table-insert-row)
-(org-defkey org-mode-map (kbd "C-M-K") 'org-table-delete-column)
-(org-defkey org-mode-map (kbd "C-c |") 'org-table-convert-region)
-(org-defkey org-mode-map (kbd "C-M-n") 'org-table-copy-down)
+(setq org-todo-keywords
+      '((sequence "IDEA(i)" "TODO(t)" "STARTED(s)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "|" "DONE(d)" "ABANDONED(a)")))
+
+(setq org-tag-persistent-alist
+      '((:startgroup . nil) ;; todo type
+	("learning" . ?l)
+	("research" . ?r)
+	("fun" . ?f)
+	("arranging" . ?a)
+	("work" . ?w)
+	("other" . ?o)
+	(:endgroup . nil)
+	(:startgroup . nil) ;; more concrete task
+	("paper-reading" . ?p)
+	("coding" . ?c)
+	(:endgroup . nil)
+	(:startgroup . nil) ;; difficulty
+	("EASY" . ?e)
+        ("MEDIUM" . ?m)
+        ("HARD" . ?h)
+	(:endgroup . nil)
+        ("URGENT" . ?u) ;; importance
+	))
+
+(setq org-tag-faces
+      '(
+	("learning" . (:foreground "GoldenRod" :weight bold))
+        ("research" . (:foreground "GoldenRod" :weight bold))
+	("fun" . (:foreground "GoldenRod" :weight bold))
+	("arranging" . (:foreground "GoldenRod" :weight bold))
+	("work" . (:foreground "GoldenRod" :weight bold))
+        ("other" . (:foreground "GoldenRod" :weight bold))
+
+        ("paper-reading" . (:foreground "IndianRed1" :weight bold))   
+        ("coding" . (:foreground "IndianRed1" :weight bold))
+
+        ("URGENT" . (:foreground "Red" :weight bold))  
+
+        ("EASY" . (:foreground "OrangeRed" :weight bold))  
+        ("MEDIUM" . (:foreground "OrangeRed" :weight bold))  
+        ("HARD" . (:foreground "OrangeRed" :weight bold))  
+        )
+      )
+
+;; some style
+(setq org-cycle-separator-lines 1)
+;; make the section marked by ** use foreground red
+(add-to-list 'org-emphasis-alist
+             '("*" (:foreground "red")
+               ))
+
+;;; org key bindings
+(define-key org-mode-map (kbd "M-C") 'org-table-insert-column)
+(define-key org-mode-map (kbd "M-R") 'org-table-insert-row)
+(define-key org-mode-map (kbd "C-M-K") 'org-table-delete-column)
+(define-key org-mode-map (kbd "C-c |") 'org-table-convert-region)
+(define-key org-mode-map (kbd "C-M-n") 'org-table-copy-down)
 (org-babel-do-load-languages
  'org-babel-load-languages
- '((emacs-lisp . t) (python . t) (latex . t)))
+ '(
+   (emacs-lisp . t)
+   (org . t)
+   (sh . t)
+   (C . t)
+   (python . t)
+   (gnuplot . t)
+   (octave . t)
+   (R . t)
+   (dot . t)
+   (awk . t)
+   ))
 
+(setq org-export-coding-system 'utf-8)
 (setq org-src-fontify-natively t)
+(setq org-src-tab-acts-natively t)
 
-(setq org-agenda-files (quote ("~/.emacs.d/agenda.org")))
+;;; org mode files
+(setq org-directory (expand-file-name "~/org"))
+(setq org-default-notes-file (concat org-directory "/captured.org"))
+(setq org-agenda-files (quote ("~/org")))
 
 (setq org-startup-indented t) ; Enable `org-indent-mode' by default
-(add-hook 'org-mode-hook #'visual-line-mode)
+
+(add-hook 'org-mode-hook #'visual-line-mode) ; autowarp
+
+;;; ORG Capture
+(define-key global-map "\C-cc" 'org-capture)
+(define-key global-map "\C-cl" 'org-store-link)
+
+;; set a bookmark of current location and jump to the latest captured item
+;; NOTE: need to be interactive command
+(define-key global-map "\C-cj" (lambda () (interactive)
+				 (bookmark-set "org-capture-last-jump-from" t)
+				 (org-capture '(16))
+				 ))
+;; jump back after editing the captured item
+(define-key global-map "\C-cb" (lambda () (interactive)
+				 (bookmark-jump "org-capture-last-jump-from")
+				 (bookmark-delete "org-capture-last-jump-from")
+				 ))
+
+;(defun org-capture-set-tags()
+;(completing-read "Tag: " (mapcar #'first org-tag-persistent-alist) nil t))
+
+(setq org-capture-templates
+      '(("t"               ; hotkey
+	 "TODO list item"  ; name
+	 entry             ; type
+	 (file+datetree "~/org/captured.org")
+	 (file "~/.emacs.d/org-templates/todo.orgcaptmpl"))
+	;; %a means Annotation (org-store-link); %i active region; %? where cursor ends up
+	("j"
+	 "Journal entry"
+	 entry
+	 (file+datetree "~/org/journal.org")
+	 (file "~/.emacs.d/org-templates/journal.orgcaptmpl")) ;; template in file
+	("n"
+	 "Note entry"
+	 entry
+	 (file+datetree "~/org/notes.org")
+	 (file "~/.emacs.d/org-templates/note.orgcaptmpl")) ;; template in file
+	))
+
+;;;; only on emacs with x support; pdf-tools
+;(use-package pdf-tools
+;  :pin manual ;; manually update
+;  :config
+;  ;; initialise
+;  (pdf-tools-install)
+;  ;; open pdfs scaled to fit page
+;  (setq-default pdf-view-display-size 'fit-page)
+;  ;; automatically annotate highlights
+;  (setq pdf-annot-activate-created-annotations t)
+  ;; use normal isearch
+;  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+
+;;;;; --- End ---
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-faces-vector
+   [default default default italic underline success warning error])
+ '(custom-enabled-themes (quote (tango-dark)))
+ '(package-selected-packages (quote (use-package))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
