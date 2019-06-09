@@ -21,7 +21,7 @@
 
 ;; Disable tool bar, scroll bar
 (tool-bar-mode -1)
-(toggle-scroll-bar -1)
+(when (display-graphic-p) (toggle-scroll-bar -1)) ;; available only on graphic display window system
 
 
 ;;;; -- Misc --
@@ -32,17 +32,57 @@
 (put 'narrow-to-region 'disabled nil)
 
 
-;;;; -- Flymake for Python --
-(when (load "flymake" t)
-  (defun flymake-pylint-init ()
-    (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-           (local-file (file-relative-name
-                        temp-file
-                        (file-name-directory buffer-file-name))))
-      (list "epylint" (list local-file))))
-  (add-to-list 'flymake-allowed-file-name-masks
-               '("\\.py\\'" flymake-pylint-init)))
+;;;; -- Flymake for Python: external tool: pylint --
+;; pip install pylint first: https://docs.pylint.org/en/1.6.0/ide-integration.html
+;; flymake is completely refactored since Emacs 26.0.
+;; and flymake-proc is compatible with the old API. a lot of names are changed for the legacy backend (add `-proc-')
+;; can check the code for the changes
+;; https://github.com/emacs-mirror/emacs/blob/d0e2a341dd9a9a365fd311748df024ecb25b70ec/lisp/progmodes/flymake-proc.el
+;; https://github.com/emacs-mirror/emacs/blob/ee3e432300054ca488896e39fca57b10d733330a/lisp/progmodes/flymake.el
+(use-package "flymake")
+(load "flymake")
+(cond ((version<= "26.0.0" emacs-version)
+       (defun flymake-pylint-init () ;; return the cmdline to execute
+	 (let* ((temp-file (flymake-proc-init-create-temp-buffer-copy
+			    'flymake-proc-create-temp-inplace))
+		(local-file  (file-relative-name
+			      temp-file
+			      (file-name-directory buffer-file-name))))
+	   (list "epylint" (list local-file)))) ;; call `epylint' external cmdline
+       (add-to-list 'flymake-proc-allowed-file-name-masks
+		    '("\\.py\\'" flymake-pylint-init))
+       ;; `flymake-diagnostic-at-point-mode' will use `post-command-hook' to displaying flymake diagnostics at point
+       (add-hook 'flymake-mode-hook '(lambda () (flymake-diagnostic-at-point-mode)))
+       ;; display diagnostic messages in minibuffer rathert than pop out
+       (setq flymake-diagnostic-at-point-display-diagnostic-function
+	     'flymake-diagnostic-at-point-display-minibuffer)
+
+       ;; legacy is the default backend, do not need to specificy
+       ;; (setq flymake-diagnostic-functions '(flymake-proc-legacy-flymake))
+       )
+      (t ;; before version 26.0, the old flymake implementation!
+       (defun flymake-pylint-init ()
+	 (let* ((temp-file (flymake-init-create-temp-buffer-copy
+			    'flymake-create-temp-inplace))
+		(local-file (file-relative-name
+			     temp-file
+			     (file-name-directory buffer-file-name))))
+	   (list "epylint" (list local-file)))) ;; call `epylint' external cmdline
+       (add-to-list 'flymake-allowed-file-name-masks
+		    '("\\.py\\'" flymake-pylint-init))
+       ;; To avoid having to mouse hover for the error message, these functions make flymake error messages
+       ;; appear in the minibuffer
+       (defun show-fly-err-at-point ()
+	 "If the cursor is sitting on a flymake error, display the message in the minibuffer"
+	 (use-package cl)
+	 (interactive)
+	 (let ((line-no (line-number-at-pos)))
+	   (dolist (elem flymake-err-info)
+	     (if (eq (car elem) line-no)
+		 (let ((err (car (second elem))))
+		     (message "%s" (flymake-ler-text err)))))))
+       (add-hook 'post-command-hook 'show-fly-err-at-point)
+       ))
 
 ;; Set as a minor mode for Python
 (add-hook 'python-mode-hook '(lambda () (flymake-mode)))
@@ -53,21 +93,6 @@
 ;; Keymaps to navigate to the errors
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cn" 'flymake-goto-next-error)))
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cp" 'flymake-goto-prev-error)))
-
-;; To avoid having to mouse hover for the error message, these functions make flymake error messages
-;; appear in the minibuffer
-(load "flymake")
-(defun show-fly-err-at-point ()
-  "If the cursor is sitting on a flymake error, display the message in the minibuffer"
-  (use-package cl)
-  (interactive)
-  (let ((line-no (line-number-at-pos)))
-    (dolist (elem flymake-err-info)
-      (if (eq (car elem) line-no)
-      (let ((err (car (second elem))))
-        (message "%s" (flymake-ler-text err)))))))
-
-(add-hook 'post-command-hook 'show-fly-err-at-point)
 
 
 ;;;; -- ORG mode --
@@ -90,10 +115,13 @@
 (setq org-startup-indented t) ; Enable `org-indent-mode' by default
 (setq org-cycle-separator-lines 1)
 (add-hook 'org-mode-hook #'visual-line-mode) ; autowarp
-;; make the section marked by ** use foreground red
+;; make the section marked by ** use foreground red; // use foreground yellow
 (add-to-list 'org-emphasis-alist
-             '("*" (:foreground "red")
-               ))
+             '("*" (:foreground "red"))
+	     )
+(add-to-list 'org-emphasis-alist
+             '("/" (:foreground "yellow"))
+	     )
 
 ;;; Export
 (setq org-export-coding-system 'utf-8)
@@ -150,12 +178,9 @@
  '(
    (emacs-lisp . t)
    (org . t)
-   (sh . t)
+   ;; (sh . t) ; strange, cannot find ob-shell
    (C . t)
    (python . t)
-   (gnuplot . t)
-   (octave . t)
-   (R . t)
    (dot . t)
    (awk . t)
    ))
@@ -218,7 +243,7 @@
 	 (setq-default pdf-view-display-size 'fit-page)
 	 ;; automatically annotate highlights
 	 (setq pdf-annot-activate-created-annotations t)
-	 use normal isearch
+	 ;; use normal isearch
 	 (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
        ))
 
@@ -232,7 +257,7 @@
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(custom-enabled-themes (quote (tango-dark)))
- '(package-selected-packages (quote (use-package))))
+ '(package-selected-packages (quote (elpy pylint flymake-cursor use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
