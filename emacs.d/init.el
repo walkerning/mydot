@@ -125,6 +125,7 @@
 
 ;;; Export
 (setq org-export-coding-system 'utf-8)
+(setq org-export-html-validation-link nil)
 
 ;;; TODO keywords, tags settings
 (setq org-todo-keywords
@@ -213,19 +214,29 @@
 	 "TODO list item"  ; name
 	 entry             ; type
 	 (file+datetree "~/org/captured.org")
-	 (file "~/.emacs.d/org-templates/todo.orgcaptmpl"))
+	 (file "~/.emacs.d/org-templates/todo.orgcaptmpl") ;; template in file
+	 :empty-lines 1) ;; empty lines to insert before/after new item
 	;; %a means Annotation (org-store-link); %i active region; %? where cursor ends up
 	("j"
 	 "Journal entry"
 	 entry
 	 (file+datetree "~/org/journal.org")
-	 (file "~/.emacs.d/org-templates/journal.orgcaptmpl")) ;; template in file
+	 (file "~/.emacs.d/org-templates/journal.orgcaptmpl")
+	 :empty-lines 1)
+	("r"
+	 "Week report"
+	 entry
+	 (file+datetree "~/org/reports.org")
+	 (file "~/.emacs.d/org-templates/reports.orgcaptmpl")
+	 :tree-type 'week
+	 ;;:headline-levels 1
+	 :empty-lines 1)
 	("n"
 	 "Note entry"
 	 entry
 	 (file+datetree "~/org/notes.org")
-	 (file "~/.emacs.d/org-templates/note.orgcaptmpl")) ;; template in file
-	))
+	 (file "~/.emacs.d/org-templates/note.orgcaptmpl")
+	 :empty-lines 1)))
 
 
 ;;;; -- Configure pdf-tools (only on emacs on display grpahic window system) --
