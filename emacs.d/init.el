@@ -129,7 +129,7 @@
 
 ;;; TODO keywords, tags settings
 (setq org-todo-keywords
-      '((sequence "IDEA(i)" "TODO(t)" "STARTED(s)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "|" "DONE(d)" "ABANDONED(a)")))
+      '((sequence "IDEA(i)" "TODO(t)" "STARTED(s)" "RUNNING(r)" "WAITING(w)" "HOLD(h)" "LONG-TERM(l)" "|" "DONE(d)" "ABANDONED(a)")))
 
 (setq org-tag-persistent-alist
       '((:startgroup . nil) ;; todo type
@@ -143,6 +143,7 @@
 	(:startgroup . nil) ;; more concrete task
 	("paper-reading" . ?p)
 	("coding" . ?c)
+	("discussion" . ?d)
 	(:endgroup . nil)
 	(:startgroup . nil) ;; difficulty
 	("EASY" . ?e)
@@ -163,6 +164,7 @@
 
         ("paper-reading" . (:foreground "IndianRed1" :weight bold))   
         ("coding" . (:foreground "IndianRed1" :weight bold))
+	("discussion" . (:foreground "IndianRed1" :weight bold))
 
         ("URGENT" . (:foreground "Red" :weight bold))  
 
@@ -192,6 +194,7 @@
 
 ;;; ORG Capture
 (define-key global-map "\C-cc" 'org-capture)
+(define-key global-map "\C-ca" 'org-agenda)
 (define-key global-map "\C-cl" 'org-store-link)
 
 ;; set a bookmark of current location and jump to the latest captured item
@@ -206,8 +209,34 @@
 				 (bookmark-delete "org-capture-last-jump-from")
 				 ))
 
-;(defun org-capture-set-tags()
+;(defun org-capture-set-tags ()
 ;(completing-read "Tag: " (mapcar #'first org-tag-persistent-alist) nil t))
+
+;; ask for a paper pdf file, use `pdfinfo` shell command to get the tile and authors info
+;; used in paper_reading capture template
+(defun ask-for-paper-pdf ()
+  (interactive)
+  (let*
+      ((filename (read-file-name "Paper pdf:"
+				 "/Users/foxfi/Documents/research/papers/"
+				 nil
+				 nil
+				 "/Users/foxfi/Documents/research/papers/"))
+       (title (string-remove-suffix "\n" (shell-command-to-string
+	       (concat "pdfinfo " (shell-quote-argument filename)
+		       " | grep -i title | awk 'BEGIN {FS = \":[ ]+\"} {print $NF}'"))))
+       (authors (string-remove-suffix "\n" (shell-command-to-string
+		 (concat "pdfinfo " (shell-quote-argument filename)
+			 " | grep -i author | awk 'BEGIN {FS = \":[ ]+\"} {print $NF}'")))))
+    (concat "Title: " title "\n/Authors/: " authors "\n[[file:" filename "]]")))
+
+;; to conveniently insert paper-reading capture template at point (for paper reading)
+(defun org-paper-reading-at-point ()
+  "Insert an paper-reading capture template at point."
+  (interactive)
+  (org-capture 0 "p"))
+
+(define-key org-mode-map (kbd "C-c p") 'org-paper-reading-at-point)
 
 (setq org-capture-templates
       '(("t"               ; hotkey
@@ -236,7 +265,14 @@
 	 entry
 	 (file+datetree "~/org/notes.org")
 	 (file "~/.emacs.d/org-templates/note.orgcaptmpl")
-	 :empty-lines 1)))
+	 :empty-lines 1)
+	("p"
+	 "Paper reading"
+	 entry
+	 (file+headline "~/org/paper_reading.org" "Papers")
+	 (file "~/.emacs.d/org-templates/paper_reading.orgcaptmpl")
+	 :empty-lines 1)
+	))
 
 
 ;;;; -- Configure pdf-tools (only on emacs on display grpahic window system) --
@@ -268,6 +304,7 @@
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(custom-enabled-themes (quote (tango-dark)))
+ '(org-confirm-babel-evaluate nil)
  '(package-selected-packages (quote (elpy pylint flymake-cursor use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

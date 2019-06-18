@@ -1,0 +1,12 @@
+* %(ask-for-paper-pdf)
+/Conference/: %^{Conference-Time}
+/Note Created/: [%U]
+%i
+** 总结: %?
+** 内容:
+*** motivation:
+*** related work:
+*** 方法:
+*** 实验:
+*** 结论:
+** 想法/启发/改进:
