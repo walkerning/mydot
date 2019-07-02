@@ -2,7 +2,13 @@
 ;;;; -- Setup package.el, and bootstrap `use-package' --
 (require 'package)
 (setq package-enable-at-startup nil)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+
+;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+;; https://mirror.tuna.tsinghua.edu.cn/help/elpa/
+(setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                         ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+                         ("marmalade" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/marmalade/")))
+
 (package-initialize)
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -94,6 +100,11 @@
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cn" 'flymake-goto-next-error)))
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cp" 'flymake-goto-prev-error)))
 
+;;;; -- Python jedi autocompletion --
+;; `C-c .` goto-definition; `C-c d` show-doc
+(setq jedi:setup-keys t)
+(setq jedi:complete-on-dot t)
+(add-hook 'python-mode-hook 'jedi:setup)
 
 ;;;; -- ORG mode --
 (use-package cl-lib) ;; include common-lisp facilities for `sequence`
@@ -214,6 +225,7 @@
 
 ;; ask for a paper pdf file, use `pdfinfo` shell command to get the tile and authors info
 ;; used in paper_reading capture template
+;; Note: many pdf files's title/author metadata cannot be found by pdfinfo... let's try exiftool
 (defun ask-for-paper-pdf ()
   (interactive)
   (let*
@@ -259,6 +271,12 @@
 	 (file "~/.emacs.d/org-templates/reports.orgcaptmpl")
 	 :tree-type 'week
 	 ;;:headline-levels 1
+	 :empty-lines 1)
+	("d"
+	 "Daily report"
+	 entry
+	 (file+datetree "~/org/daily.org")
+	 (file "~/.emacs.d/org-templates/daily.orgcaptmpl")
 	 :empty-lines 1)
 	("n"
 	 "Note entry"
