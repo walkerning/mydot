@@ -6,8 +6,7 @@
 ;; (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 ;; https://mirror.tuna.tsinghua.edu.cn/help/elpa/
 (setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-                         ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-                         ("marmalade" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/marmalade/")))
+                         ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
 
 (package-initialize)
 (unless (package-installed-p 'use-package)
@@ -100,11 +99,72 @@
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cn" 'flymake-goto-next-error)))
 (add-hook 'flymake-mode-hook '(lambda () (define-key python-mode-map "\C-cp" 'flymake-goto-prev-error)))
 
-;;;; -- Python jedi autocompletion --
+;;;; -- Company mode for auto completion --
+;; -- C++ auto-completion --
+;; https://github.com/Sarcasm/irony-mode
+;; remember to install clang, cmake, libclang-dev, and run M-x irony-install-server
+;; however the `completion-at-point` backend does not work well; https://github.com/Sarcasm/irony-mode/issues/331
+;; So use irony with company-mode
+(use-package company
+  :ensure t
+  :config
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 3)
+  (global-company-mode t)
+  )
+(use-package company-irony
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-irony))
+
+(use-package irony
+  :ensure t
+  :config
+  (add-hook 'c++-mode-hook 'irony-mode)
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'objc-mode-hook 'irony-mode)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  )
+
+(use-package irony-eldoc
+  :ensure t
+  :config
+  (add-hook 'irony-mode-hook #'irony-eldoc)
+  )
+
+;; -- Python jedi autocompletion --
 ;; `C-c .` goto-definition; `C-c d` show-doc
-(setq jedi:setup-keys t)
-(setq jedi:complete-on-dot t)
-(add-hook 'python-mode-hook 'jedi:setup)
+;; Use company mode too
+(use-package company-jedi
+    :ensure t
+    :config
+    (add-hook 'python-mode-hook 'jedi:setup)
+    (add-hook 'python-mode-hook '(lambda () (add-to-list 'company-backends 'company-jedi)))
+    (setq jedi:setup-keys t)
+    (setq jedi:complete-on-dot t)
+    )
+
+;;;; -- Yasnippet --
+(use-package yasnippet
+  :ensure t
+  :config
+  (use-package yasnippet-snippets
+    :ensure t)
+  (add-hook 'python-mode-hook 'yas-minor-mode)
+  (add-hook 'c++-mode-hook 'yas-minor-mode)
+  (add-hook 'c-mode-hook 'yas-minor-mode)
+  (add-hook 'latex-mode-hook 'yas-minor-mode)
+  (yas-reload-all))
+
+;; ;;;; -- Swiper for search --
+;; (use-package swiper
+;;   :ensure t
+;;   :bind (("C-s" . swiper-isearch)))
+
+;; ;;;; -- Counsel for find files --
+;; (use-package counsel
+;;   :ensure t
+;;   :bind (("C-x C-f" . counsel-find-file)))
 
 ;;;; -- ORG mode --
 (use-package cl-lib) ;; include common-lisp facilities for `sequence`
@@ -323,7 +383,7 @@
    [default default default italic underline success warning error])
  '(custom-enabled-themes (quote (tango-dark)))
  '(org-confirm-babel-evaluate nil)
- '(package-selected-packages (quote (elpy pylint flymake-cursor use-package))))
+ '(package-selected-packages (quote (jedi elpy pylint flymake-cursor use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
