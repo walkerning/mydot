@@ -42,3 +42,4 @@ eggs/
 
 # tmpfiles
 tmp/
+local_cfgs/
