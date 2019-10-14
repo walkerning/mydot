@@ -110,7 +110,10 @@
   :config
   (setq company-idle-delay 0)
   (setq company-minimum-prefix-length 3)
-  (global-company-mode t)
+  (add-hook 'python-mode-hook 'company-mode)
+  (add-hook 'c++-mode-hook 'company-mode)
+  (add-hook 'emacs-lisp-mode-hook 'company-mode)
+  ;; (global-company-mode t)
   )
 (use-package company-irony
   :ensure t
@@ -150,6 +153,7 @@
   :config
   (use-package yasnippet-snippets
     :ensure t)
+  (add-hook 'emacs-lisp-mode-hook 'yas-minor-mode)
   (add-hook 'python-mode-hook 'yas-minor-mode)
   (add-hook 'c++-mode-hook 'yas-minor-mode)
   (add-hook 'c-mode-hook 'yas-minor-mode)
@@ -214,6 +218,7 @@
 	(:startgroup . nil) ;; more concrete task
 	("paper-reading" . ?p)
 	("coding" . ?c)
+	("exp" . ?e)
 	("discussion" . ?d)
 	(:endgroup . nil)
 	(:startgroup . nil) ;; difficulty
@@ -235,6 +240,7 @@
 
         ("paper-reading" . (:foreground "IndianRed1" :weight bold))   
         ("coding" . (:foreground "IndianRed1" :weight bold))
+	("exp" . (:foreground "IndianRed1" :weight bold))
 	("discussion" . (:foreground "IndianRed1" :weight bold))
 
         ("URGENT" . (:foreground "Red" :weight bold))  
@@ -338,6 +344,18 @@
 	 (file+datetree "~/org/daily.org")
 	 (file "~/.emacs.d/org-templates/daily.orgcaptmpl")
 	 :empty-lines 1)
+	("s"
+	 "Sports report"
+	 entry
+	 (file+datetree "~/org/sports.org")
+	 (file "~/.emacs.d/org-templates/daily.orgcaptmpl")
+	 :empty-lines 1)
+	("b"
+	 "Banner"
+	 entry
+	 (file "~/org/banner.org")
+	 "* [%U] %?"
+	 :empty-lines 1)
 	("n"
 	 "Note entry"
 	 entry
@@ -382,6 +400,9 @@
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(custom-enabled-themes (quote (tango-dark)))
+ '(org-agenda-files
+   (quote
+    ("~/org/daily.org" "/Users/foxfi/org/captured.org" "/Users/foxfi/org/index.org" "/Users/foxfi/org/journal.org" "/Users/foxfi/org/mobileorg.org" "/Users/foxfi/org/notes.org" "/Users/foxfi/org/paper_reading.org" "/Users/foxfi/org/reports.org" "/Users/foxfi/org/tmp.org")))
  '(org-confirm-babel-evaluate nil)
  '(package-selected-packages (quote (jedi elpy pylint flymake-cursor use-package))))
 (custom-set-faces
