@@ -218,7 +218,7 @@
 	(:startgroup . nil) ;; more concrete task
 	("paper-reading" . ?p)
 	("coding" . ?c)
-	("exp" . ?e)
+	("exp" . ?x)
 	("discussion" . ?d)
 	(:endgroup . nil)
 	(:startgroup . nil) ;; difficulty
@@ -389,6 +389,44 @@
 	 ;; use normal isearch
 	 (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
        ))
+
+;;;; auxtex
+(setq TeX-PDF-mode t)
+;; mode variable
+(setq latex-run-command "pdflatex")
+;; Use pdf-tools to open PDF files in emacs, instead of calling open
+(setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+      TeX-source-correlate-start-server t)
+
+;; Update PDF buffers after successful LaTeX runs
+(add-hook 'TeX-after-compilation-finished-functions
+	  #'TeX-revert-document-buffer)
+;; run latex, bibtex, latex, latex, view
+(defun my-tex-run ()
+  (interactive)
+  (TeX-command "LaTeX" 'TeX-master-file)
+  (tex-bibtex-file)
+  (TeX-command "LaTeX" 'TeX-master-file)
+  (TeX-command "LaTeX" 'TeX-master-file)
+  (TeX-view))
+(add-hook 'tex-mode-hook '(lambda () (define-key tex-mode-map (kbd "C-c C-a") 'my-tex-run)))
+
+
+;; https://emacs.stackexchange.com/questions/19686/how-to-use-pdf-tools-pdf-view-mode-in-emacs
+;; use C-C C-V to jump from source line to pdf region
+(setq TeX-source-correlate-mode t)
+(setq TeX-source-correlate-methods '((dvi . source-specials)
+				     (pdf . synctex)))
+(setq pdf-sync-backward-display-action t)
+(setq pdf-sync-forward-display-action t)
+
+;;; enlarge/shrink windows
+;; https://stackoverflow.com/questions/4987760/how-to-change-size-of-split-screen-emacs-windows/4988206
+(define-key global-map (kbd "C-x <right>") 'enlarge-window-horizontally)
+(define-key global-map (kbd "C-x <left>") 'shrink-window-horizontally)
+(define-key global-map (kbd "C-x <up>") 'enlarge-window)
+(define-key global-map (kbd "C-x <down>") 'shrink-window)
+
 
 ;;;;; --- End ---
 
